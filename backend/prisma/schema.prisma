@@ -1,0 +1,370 @@
+// ─────────────────────────────────────────────────────────────
+// HerWay AI — Prisma schema (PostgreSQL)
+//
+// Run `npm run db:push` (or `db:migrate`) then `npm run db:seed`
+// to prepare a local database. The frontend runs against the
+// in-browser mock data layer until VITE_API_URL is configured.
+// ─────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  member
+  cooperative_admin
+  platform_admin
+}
+
+enum ProductStatus {
+  active
+  pending
+  inactive
+}
+
+enum Availability {
+  In_Stock
+  Made_to_Order
+  Limited
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+}
+
+enum TransactionType {
+  savings
+  loan
+  repayment
+  contribution
+  sale
+}
+
+enum LoanStatus {
+  active
+  closed
+}
+
+enum PostType {
+  post
+  achievement
+  question
+  opportunity
+  workshop
+}
+
+enum NotificationType {
+  order
+  message
+  match
+  finance
+  system
+}
+
+model User {
+  id                    String   @id @default(cuid())
+  name                  String
+  email                 String   @unique
+  passwordHash          String
+  phone                 String?
+  role                  Role     @default(member)
+  avatarUrl             String   @default("")
+  location              String   @default("India")
+  state                 String?
+  bio                   String?
+  languages             String[] @default(["en"])
+  experienceYears       Int?
+  verified              Boolean  @default(false)
+  achievements          String[] @default([])
+  collaborationInterests String[] @default([])
+  cooperativeId         String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  cooperative   Cooperative?  @relation("CooperativeMembers", fields: [cooperativeId], references: [id], onDelete: SetNull)
+  adminOf       Cooperative[] @relation("CooperativeAdmin")
+  skills        UserSkill[]
+  products      Product[]
+  orders        Order[]
+  transactions  Transaction[]
+  savings       SavingsRecord[]
+  loans         Loan[]
+  repayments    Repayment[]
+  posts         Post[]
+  comments      Comment[]
+  notifications Notification[]
+
+  @@index([cooperativeId])
+  @@index([role])
+}
+
+model Cooperative {
+  id            String   @id @default(cuid())
+  name          String
+  type          String
+  location      String
+  description   String
+  logoUrl       String?
+  members       Int      @default(0)
+  activeMembers Int      @default(0)
+  adminId       String
+  createdAt     DateTime @default(now())
+
+  admin    User      @relation("CooperativeAdmin", fields: [adminId], references: [id])
+  people   User[]    @relation("CooperativeMembers")
+  products Product[]
+
+  @@index([adminId])
+}
+
+model Skill {
+  id       String      @id @default(cuid())
+  name     String      @unique
+  category String
+  users    UserSkill[]
+}
+
+model UserSkill {
+  id      String @id @default(cuid())
+  userId  String
+  skillId String
+  level   String @default("Beginner")
+  years   Int    @default(0)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+  @@index([userId])
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  description  String        @default("")
+  price        Float         @default(0)
+  category     String
+  imageUrl     String        @default("")
+  sellerId     String
+  cooperativeId String?
+  location     String        @default("India")
+  rating       Float         @default(0)
+  ratingCount  Int           @default(0)
+  availability Availability  @default(In_Stock)
+  stock        Int           @default(1)
+  status       ProductStatus @default(active)
+  featured     Boolean       @default(false)
+  materials    String[]      @default([])
+  tags         String[]      @default([])
+  createdAt    DateTime      @default(now())
+
+  seller      User        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  cooperative Cooperative? @relation(fields: [cooperativeId], references: [id], onDelete: SetNull)
+  orderItems  OrderItem[]
+
+  @@index([sellerId])
+  @@index([category])
+  @@index([status])
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  userId       String
+  customerName String
+  total        Float       @default(0)
+  status       OrderStatus @default(pending)
+  delivery     String?
+  placedAt     DateTime    @default(now())
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id          String @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  price       Float
+  quantity    Int    @default(1)
+  imageUrl    String @default("")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Transaction {
+  id           String          @id @default(cuid())
+  userId       String
+  type         TransactionType
+  amount       Float
+  description  String
+  date         DateTime        @default(now())
+  authorizedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+}
+
+model SavingsRecord {
+  id      String   @id @default(cuid())
+  userId  String
+  date    DateTime @default(now())
+  amount  Float
+  channel String?
+  note    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Loan {
+  id           String     @id @default(cuid())
+  userId       String
+  principal    Float
+  balance      Float
+  interestRate Float      @default(0)
+  issuedAt     DateTime   @default(now())
+  purpose      String?
+  status       LoanStatus @default(active)
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repayments Repayment[]
+
+  @@index([userId])
+}
+
+model Repayment {
+  id     String   @id @default(cuid())
+  loanId String
+  userId String
+  amount Float
+  date   DateTime @default(now())
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loanId])
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  authorId  String
+  content   String
+  tags      String[] @default([])
+  likes     Int      @default(0)
+  type      PostType @default(post)
+  createdAt DateTime @default(now())
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+
+  @@index([authorId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  type      NotificationType @default(system)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MatchSuggestion {
+  id          String   @id @default(cuid())
+  userName    String
+  avatarUrl   String
+  location    String
+  skills      String[] @default([])
+  interest    String
+  matchScore  Int
+  opportunity String
+  createdAt   DateTime @default(now())
+}
+
+model AIConversation {
+  id        String   @id @default(cuid())
+  userId    String?
+  feature   String
+  language  String   @default("en")
+  messages  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model AIRecommendation {
+  id        String   @id @default(cuid())
+  userId    String?
+  feature   String
+  input     String
+  output    String
+  provider  String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([feature])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+}
+
+model ConsentRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  scope     String
+  granted   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, scope])
+}
