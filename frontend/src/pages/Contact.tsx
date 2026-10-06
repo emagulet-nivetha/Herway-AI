@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Mail, MapPin, MessageSquare, Phone, Send } from "lucide-react";
 import { Input, Textarea, Select } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
-import { Alert, Card, SectionHeading } from "@/components/ui/Display";
+import { Alert } from "@/components/ui/Feedback";
+import { Card, SectionHeading } from "@/components/ui/Display";
 import { useToast } from "@/components/ui/Toast";
 import { isValidEmail } from "@/utils/helpers";
 

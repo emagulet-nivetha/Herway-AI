@@ -6,9 +6,9 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { Card, EmptyState } from "@/components/ui/Display";
+import { Card } from "@/components/ui/Display";
 import { Input, Select } from "@/components/ui/Form";
-import { Alert } from "@/components/ui/Feedback";
+import { Alert, EmptyState } from "@/components/ui/Feedback";
 import { formatCurrency, isValidEmail } from "@/utils/helpers";
 
 export function Checkout() {

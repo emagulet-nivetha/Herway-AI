@@ -5,7 +5,15 @@ import { SectionHeading } from "@/components/ui/Display";
 import { Badge } from "@/components/ui/Display";
 import { classNames } from "@/utils/helpers";
 
-const SOLUTIONS = [
+type Solution = {
+  icon: typeof Store;
+  title: string;
+  tone: "primary" | "secondary" | "rose";
+  points: readonly string[];
+  note?: string;
+};
+
+const SOLUTIONS: Solution[] = [
   {
     icon: Store,
     title: "Digital Marketplace",
@@ -44,7 +52,7 @@ const SOLUTIONS = [
     tone: "rose",
     points: ["Product descriptions", "Pricing & marketing ideas", "Business planning", "Market research & translation"],
   },
-] as const;
+];
 
 const tones = {
   primary: "bg-primary-50 text-primary-600",

@@ -48,19 +48,19 @@ async function request<T>(
 
 export const api = {
   auth: {
-    async login(input: Parameters<typeof mockApi.auth.login>[0]) {
+    async login(input: Parameters<typeof mockApi.auth.login>[0]): Promise<Awaited<ReturnType<typeof mockApi.auth.login>>> {
       const real = await request("/auth/login", {
         method: "POST",
         body: JSON.stringify(input),
       });
-      return real ?? mockApi.auth.login(input);
+      return (real as Awaited<ReturnType<typeof mockApi.auth.login>>) ?? mockApi.auth.login(input);
     },
-    async register(input: Parameters<typeof mockApi.auth.register>[0]) {
+    async register(input: Parameters<typeof mockApi.auth.register>[0]): Promise<Awaited<ReturnType<typeof mockApi.auth.register>>> {
       const real = await request("/auth/register", {
         method: "POST",
         body: JSON.stringify(input),
       });
-      return real ?? mockApi.auth.register(input);
+      return (real as Awaited<ReturnType<typeof mockApi.auth.register>>) ?? mockApi.auth.register(input);
     },
     async me(token: string) {
       const real = await request("/auth/me");
@@ -115,18 +115,21 @@ export const api = {
       const real = await request(`/analytics/me?userId=${userId}`);
       return (real as Awaited<ReturnType<typeof mockApi.finance.summary>>) ?? mockApi.finance.summary(userId);
     },
-    transactions: (userId: string) =>
-      request(`/transactions?userId=${userId}`).then((r) => (r as never) ?? mockApi.finance.transactions(userId)),
-    addTransaction: (input: Parameters<typeof mockApi.finance.addTransaction>[0]) =>
-      request("/transactions", { method: "POST", body: JSON.stringify(input) }).then(
-        (r) => (r as never) ?? mockApi.finance.addTransaction(input)
-      ),
-    loans: (userId: string) =>
-      request(`/loans?userId=${userId}`).then((r) => (r as never) ?? mockApi.finance.loans(userId)),
-    savings: (userId: string) =>
-      request(`/savings?userId=${userId}`).then((r) => (r as never) ?? mockApi.finance.savings(userId)),
-    repayments: (userId: string) =>
-      request(`/repayments?userId=${userId}`).then((r) => (r as never) ?? mockApi.finance.repayments(userId)),
+    transactions: async (userId: string): Promise<Awaited<ReturnType<typeof mockApi.finance.transactions>>> =>
+      (await request(`/transactions?userId=${userId}`) as Awaited<ReturnType<typeof mockApi.finance.transactions>>) ??
+      mockApi.finance.transactions(userId),
+    addTransaction: async (input: Parameters<typeof mockApi.finance.addTransaction>[0]): Promise<Awaited<ReturnType<typeof mockApi.finance.addTransaction>>> =>
+      (await request("/transactions", { method: "POST", body: JSON.stringify(input) }) as Awaited<ReturnType<typeof mockApi.finance.addTransaction>>) ??
+      mockApi.finance.addTransaction(input),
+    loans: async (userId: string): Promise<Awaited<ReturnType<typeof mockApi.finance.loans>>> =>
+      (await request(`/loans?userId=${userId}`) as Awaited<ReturnType<typeof mockApi.finance.loans>>) ??
+      mockApi.finance.loans(userId),
+    savings: async (userId: string): Promise<Awaited<ReturnType<typeof mockApi.finance.savings>>> =>
+      (await request(`/savings?userId=${userId}`) as Awaited<ReturnType<typeof mockApi.finance.savings>>) ??
+      mockApi.finance.savings(userId),
+    repayments: async (userId: string): Promise<Awaited<ReturnType<typeof mockApi.finance.repayments>>> =>
+      (await request(`/repayments?userId=${userId}`) as Awaited<ReturnType<typeof mockApi.finance.repayments>>) ??
+      mockApi.finance.repayments(userId),
   },
 
   users: {
@@ -143,11 +146,12 @@ export const api = {
       const real = await request(`/users/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
       return (real as Awaited<ReturnType<typeof mockApi.users.update>>) ?? mockApi.users.update(id, patch);
     },
-    skills: () => request("/users/skills").then((r) => (r as never) ?? mockApi.users.skills()),
-    addSkill: (skill: Parameters<typeof mockApi.users.addSkill>[0]) =>
-      request("/users/skills", { method: "POST", body: JSON.stringify(skill) }).then(
-        (r) => (r as never) ?? mockApi.users.addSkill(skill)
-      ),
+    skills: async (): Promise<Awaited<ReturnType<typeof mockApi.users.skills>>> =>
+      (await request("/users/skills") as Awaited<ReturnType<typeof mockApi.users.skills>>) ??
+      mockApi.users.skills(),
+    addSkill: async (skill: Parameters<typeof mockApi.users.addSkill>[0]): Promise<Awaited<ReturnType<typeof mockApi.users.addSkill>>> =>
+      (await request("/users/skills", { method: "POST", body: JSON.stringify(skill) }) as Awaited<ReturnType<typeof mockApi.users.addSkill>>) ??
+      mockApi.users.addSkill(skill),
   },
 
   cooperatives: {

@@ -17,11 +17,13 @@ export function Alert({
   title,
   children,
   onClose,
+  className,
 }: {
   tone?: "info" | "success" | "warning" | "error";
   title?: string;
   children: ReactNode;
   onClose?: () => void;
+  className?: string;
 }) {
   const tones = {
     info: { wrap: "border-secondary-200 bg-secondary-50 text-secondary-600", Icon: Info },
@@ -33,7 +35,7 @@ export function Alert({
   return (
     <div
       role="alert"
-      className={classNames("flex items-start gap-3 rounded-xl border px-4 py-3 text-sm", wrap)}
+      className={classNames("flex items-start gap-3 rounded-xl border px-4 py-3 text-sm", wrap, className)}
     >
       <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       <div className="flex-1">
